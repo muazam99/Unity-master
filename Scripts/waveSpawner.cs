@@ -1,0 +1,96 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class waveSpawner : MonoBehaviour
+{
+    [System.Serializable]
+    public class Wave
+    {
+        public enemy[] enemies;
+        public int count;
+        public float timeBetweenSpawns;
+    }
+
+    public Wave[] waves;
+    public Transform[] spawnPoints;
+    public float timeBetweenWaves;
+
+    private Wave currentWave;
+    private int currentWaveIndex;
+    private Transform player;
+
+    private bool finishSpawn;
+
+    public GameObject boss;
+    public Transform bossSpawnPoint;
+
+    public GameObject healthBar;
+
+
+    private void Start()
+    {
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+        StartCoroutine(StartNextWave(currentWaveIndex));
+    }
+
+    IEnumerator StartNextWave(int index)
+    {
+        yield return new WaitForSeconds(timeBetweenWaves);
+        StartCoroutine(SpawnWaves(index));
+    }
+
+    IEnumerator SpawnWaves( int index)
+    {
+        currentWave = waves[index];
+
+        for(int i=0; i<currentWave.count; i++)
+        {
+
+            if(player == null)
+            {
+                yield break;
+            }
+
+            enemy randomEnemy = currentWave.enemies[Random.Range(0, currentWave.enemies.Length)];
+            Transform randomSpot = spawnPoints[Random.Range(0, spawnPoints.Length)];
+            Instantiate(randomEnemy, randomSpot.position, randomSpot.rotation);
+
+            if( i == currentWave.count - 1)
+            {
+                finishSpawn = true;
+            }
+            else
+            {
+                finishSpawn = false;
+            }
+
+
+            yield return new WaitForSeconds(currentWave.timeBetweenSpawns);
+
+        }
+    }
+
+
+
+    private void Update()
+    {
+        if(finishSpawn == true && GameObject.FindGameObjectsWithTag("enemy").Length == 0)
+        {
+            finishSpawn = false;
+            if(currentWaveIndex + 1 < waves.Length)
+            {
+                currentWaveIndex++;
+                StartCoroutine(StartNextWave(currentWaveIndex));
+            }
+            else
+            {
+                healthBar.SetActive(true);
+                Instantiate(boss, bossSpawnPoint.position, bossSpawnPoint.rotation);
+            }
+        }
+    }
+
+
+
+}
